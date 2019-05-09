@@ -2,43 +2,41 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    k8s-app: maven-service
-  name: maven-service
+    k8s-app: test-abc
+  name: maven-test
 spec:
   ports:
-  - port: 80
+  - port: 8080
     protocol: TCP
-    targetPort: 80
+    targetPort: 8080
   selector:
-    app: maven
+    k8s-app: test-abc
   type: NodePort
 
+
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: maven-service
+  name: maven
   labels:
-    k8s-app: maven-service
+    k8s-app: test-abc
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: maven-service
+      k8s-app: test-abc
   template:
     metadata:
       labels:
-        app: maven-service
+        k8s-app: test-abc
     spec:
       containers:
-        - name: maven
-          image: 10.100.26.151:5000/maven:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-          - containerPort: 80
-          env:
-            - name: key
-              value: "value"
+      - name: maven
+        image: 10.100.26.151:5000/maven:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
 
 ---
 apiVersion: extensions/v1beta1
@@ -46,12 +44,12 @@ kind: Ingress
 metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-  name: maven-service
+  name: maven-qwe
 spec:
   rules:
   - host: maven.com
     http:
       paths:
       - backend:
-        serviceName: maven-service
-        servicePort: 80
+          serviceName: maven-test
+          servicePort: 8080
