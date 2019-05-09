@@ -1,34 +1,57 @@
 apiVersion: v1
 kind: Service
 metadata:
+  labels:
+    k8s-app: maven-service
   name: maven-service
 spec:
-  type: NodePort
   ports:
-  - name: maven
-    port: 8080
-    nodePort: 31012
-    targetPort: 8080
+  - port: 80
     protocol: TCP
+    targetPort: 80
   selector:
     app: maven
+  type: NodePort
+
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: maven-deployments
+  name: maven-service
+  labels:
+    k8s-app: maven-service
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: maven-service
   template:
     metadata:
       labels:
-        app: maven
+        app: maven-service
     spec:
       containers:
         - name: maven
           image: 10.100.26.151:5000/maven:latest
+          imagePullPolicy: IfNotPresent
           ports:
-          - containerPort: 8080
+          - containerPort: 80
           env:
             - name: key
               value: "value"
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  name: maven-service
+spec:
+  rules:
+  - host: maven.com
+    http:
+      paths:
+      - backend:
+        serviceName: maven-service
+        servicePort: 80
